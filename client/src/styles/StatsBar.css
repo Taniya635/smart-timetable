@@ -1,0 +1,84 @@
+/* ========== STATS BAR ========== */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+  animation: fadeIn 0.4s ease both;
+}
+
+.stat-card {
+  padding: 18px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.stat-card.purple::before { background: var(--primary-gradient); }
+.stat-card.teal::before { background: linear-gradient(135deg, #00b894, #00cec9); }
+.stat-card.amber::before { background: linear-gradient(135deg, #f39c12, #fdcb6e); }
+.stat-card.coral::before { background: linear-gradient(135deg, #e17055, #ff6b6b); }
+.stat-card.blue::before { background: linear-gradient(135deg, #0984e3, #74b9ff); }
+
+.stat-card:hover {
+  border-color: var(--glass-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+  opacity: 0.7;
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-card.purple .stat-value { color: var(--primary-light); }
+.stat-card.teal .stat-value { color: var(--success); }
+.stat-card.amber .stat-value { color: var(--warning); }
+.stat-card.coral .stat-value { color: var(--danger); }
+.stat-card.blue .stat-value { color: var(--info); }
+
+.stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+/* Utilization bar */
+.utilization-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--surface);
+  border-radius: 3px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.utilization-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--primary-gradient);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
