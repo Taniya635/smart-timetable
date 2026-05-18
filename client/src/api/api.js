@@ -1,7 +1,17 @@
 import axios from 'axios';
 
+const resolveApiBaseUrl = () => {
+  const rawUrl = import.meta.env.VITE_API_URL?.trim();
+
+  if (!rawUrl) {
+    return 'https://backend-smart-timetable-1.onrender.com/api';
+  }
+
+  return rawUrl.replace(/\/+$/, '').replace(/\/api$/, '') + '/api';
+};
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://backend-smart-timetable.onrender.com/api',
+  baseURL: resolveApiBaseUrl(),
 });
 
 // Attach JWT token to every request
