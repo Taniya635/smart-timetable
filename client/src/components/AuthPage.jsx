@@ -23,9 +23,7 @@ export default function AuthPage({ onAuth }) {
         ? await login({ email: form.email, password: form.password })
         : await register(form);
 
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      onAuth(res.data.user, res.data.token);
+      onAuth(res.data.user);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
     } finally {

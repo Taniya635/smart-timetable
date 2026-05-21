@@ -4,7 +4,7 @@ const resolveApiBaseUrl = () => {
   const rawUrl = import.meta.env.VITE_API_URL?.trim();
 
   if (!rawUrl) {
-    return 'https://backend-smart-timetable-1.onrender.com/api';
+    return 'http://localhost:5000/api';
   }
 
   return rawUrl.replace(/\/+$/, '').replace(/\/api$/, '') + '/api';
@@ -12,34 +12,25 @@ const resolveApiBaseUrl = () => {
 
 const API = axios.create({
   baseURL: resolveApiBaseUrl(),
+  withCredentials: true,
 });
 
 // Attach JWT token to every request
 API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
   return config;
 });
 
 // Handle 401 responses (expired/invalid token)
 API.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.reload();
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Auth
 export const register = (data) => API.post('/auth/register', data);
 export const login = (data) => API.post('/auth/login', data);
 export const getMe = () => API.get('/auth/me');
+export const logout = () => API.post('/auth/logout');
 
 // Courses
 export const getCourses = () => API.get('/courses');

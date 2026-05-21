@@ -9,6 +9,24 @@ const generateToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, { expiresIn: '7d' });
 };
 
+const authCookieOptions = {
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  secure: process.env.NODE_ENV === 'production',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+const setAuthCookie = (res, token) => {
+  res.cookie('auth_token', token, authCookieOptions);
+};
+
+const clearAuthCookie = (res) => {
+  res.clearCookie('auth_token', {
+    ...authCookieOptions,
+    maxAge: undefined,
+  });
+};
+
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
@@ -29,9 +47,9 @@ router.post('/register', async (req, res) => {
 
     const user = await User.create({ name, email, password });
     const token = generateToken(user._id);
+    setAuthCookie(res, token);
 
     res.status(201).json({
-      token,
       user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (err) {
@@ -59,9 +77,9 @@ router.post('/login', async (req, res) => {
     }
 
     const token = generateToken(user._id);
+    setAuthCookie(res, token);
 
     res.json({
-      token,
       user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (err) {
@@ -69,14 +87,24 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// POST /api/auth/logout
+router.post('/logout', async (req, res) => {
+  clearAuthCookie(res);
+  res.json({ message: 'Logged out' });
+});
+
 // GET /api/auth/me (get current user)
 router.get('/me', async (req, res) => {
   try {
+    const cookieHeader = req.headers.cookie || '';
+    const cookieMatch = cookieHeader.match(/(?:^|;\s*)auth_token=([^;]+)/);
     const header = req.headers.authorization;
-    if (!header || !header.startsWith('Bearer ')) {
+    const token = cookieMatch?.[1] || (header && header.startsWith('Bearer ') ? header.split(' ')[1] : null);
+
+    if (!token) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
-    const token = header.split(' ')[1];
+
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findById(decoded.id);
     if (!user) {

@@ -13,17 +13,14 @@ import {
   getConstraints, updateConstraints,
   generateTimetable, getTimetable,
   getRooms, createRoom, deleteRoom,
-  getMe,
+  getMe, logout,
 } from './api/api';
 import './App.css';
 
 function App() {
   // Auth state
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
 
   // App state
   const [courses, setCourses] = useState([]);
@@ -48,16 +45,17 @@ function App() {
   }, []);
 
   // Handle auth
-  const handleAuth = (userData, tokenStr) => {
+  const handleAuth = (userData) => {
     setUser(userData);
-    setToken(tokenStr);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      // Ignore logout network errors and clear local state anyway.
+    }
     setUser(null);
-    setToken(null);
     setCourses([]);
     setRooms([]);
     setConstraints(null);
@@ -66,20 +64,23 @@ function App() {
     setSuggestions([]);
   };
 
-  // Verify token on mount
+  // Verify auth cookie on mount
   useEffect(() => {
-    if (token) {
-      getMe().then(res => {
+    getMe()
+      .then(res => {
         setUser(res.data.user);
-      }).catch(() => {
-        handleLogout();
+      })
+      .catch(() => {
+        setUser(null);
+      })
+      .finally(() => {
+        setAuthReady(true);
       });
-    }
-  }, [token]);
+  }, []);
 
   // Load data when authenticated
   useEffect(() => {
-    if (!user || !token) return;
+    if (!user) return;
 
     const loadData = async () => {
       try {
@@ -104,10 +105,14 @@ function App() {
       }
     };
     loadData();
-  }, [user, token, addToast]);
+  }, [user, addToast]);
+
+  if (!authReady) {
+    return null;
+  }
 
   // If not authenticated, show auth page
-  if (!user || !token) {
+  if (!user) {
     return <AuthPage onAuth={handleAuth} />;
   }
 
