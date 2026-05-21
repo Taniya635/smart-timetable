@@ -4,7 +4,7 @@ const resolveApiBaseUrl = () => {
   const rawUrl = import.meta.env.VITE_API_URL?.trim();
 
   if (!rawUrl) {
-    return 'http://localhost:5000/api';
+    return 'https://smart-timetable-1-smts.onrender.com/api';
   }
 
   return rawUrl.replace(/\/+$/, '').replace(/\/api$/, '') + '/api';
