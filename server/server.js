@@ -54,6 +54,7 @@ app.use(express.json());
 // Connect to MongoDB
 connectDB();
 
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/courses', require('./routes/courses'));
