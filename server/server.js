@@ -10,42 +10,42 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS Configuration
-const corsOptions = {
-  origin: function (origin, callback) {
-    // List of allowed origins
-    const allowedOrigins = [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "http://localhost:5000",
-    ];
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     // List of allowed origins
+//     const allowedOrigins = [
+//       "http://localhost:3000",
+//       "http://localhost:5173",
+//       "http://localhost:5000",
+//     ];
 
-    // Add environment-based URLs
-    if (process.env.FRONTEND_URL) {
-      allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/+$/, "")); // Remove trailing slash
-    }
-    if (process.env.CLIENT_URL) {
-      allowedOrigins.push(process.env.CLIENT_URL.replace(/\/+$/, "")); // Remove trailing slash
-    }
+//     // Add environment-based URLs
+//     if (process.env.FRONTEND_URL) {
+//       allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/+$/, "")); // Remove trailing slash
+//     }
+//     if (process.env.CLIENT_URL) {
+//       allowedOrigins.push(process.env.CLIENT_URL.replace(/\/+$/, "")); // Remove trailing slash
+//     }
 
-    // In production, allow any origin for CORS preflight (OPTIONS requests work)
-    // Security is handled by token validation
-    if (process.env.NODE_ENV === "production") {
-      callback(null, true);
-    } else if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS rejected origin: ${origin}`);
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true, // Allow cookies/credentials
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  exposedHeaders: ["Content-Type", "Authorization"],
-};
+//     // In production, allow any origin for CORS preflight (OPTIONS requests work)
+//     // Security is handled by token validation
+//     if (process.env.NODE_ENV === "production") {
+//       callback(null, true);
+//     } else if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       console.warn(`CORS rejected origin: ${origin}`);
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   credentials: true, // Allow cookies/credentials
+//   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+//   exposedHeaders: ["Content-Type", "Authorization"],
+// };
 
 // Middleware
-app.use(cors(corsOptions));
+app.use(cors);
 app.use(express.json());
 
 // Debug logging for requests
