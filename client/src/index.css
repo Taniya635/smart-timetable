@@ -588,11 +588,50 @@ body {
   html {
     font-size: 13px;
   }
+  :root {
+    --header-height: 58px;
+    --sidebar-width: 88vw;
+  }
+  .glass-card {
+    padding: 18px;
+    border-radius: 14px;
+  }
+  .form-group {
+    gap: 5px;
+  }
   .form-row {
     grid-template-columns: 1fr;
   }
   .modal-content {
-    width: 95%;
-    padding: 24px;
+    width: min(95vw, 560px);
+    padding: 20px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .form-actions {
+    flex-direction: column;
+  }
+  .form-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 12px;
+  }
+  .main-content {
+    padding: calc(var(--header-height) + 10px) 10px 18px;
+  }
+  .glass-card {
+    padding: 14px;
+  }
+  .modal-content {
+    width: calc(100vw - 20px);
+    padding: 16px;
+    border-radius: 14px;
+  }
+  .chip {
+    padding: 4px 10px;
   }
 }

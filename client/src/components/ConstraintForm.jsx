@@ -1,22 +1,28 @@
 import { useState } from 'react';
 import '../styles/ConstraintForm.css';
+import { formatTimeValue, parseTimeValue } from '../utils/time';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export default function ConstraintForm({ constraints, onSubmit, onClose }) {
   const [form, setForm] = useState({
     maxHoursPerDay: constraints?.maxHoursPerDay || 6,
-    lunchBreakStart: constraints?.lunchBreakStart || 12,
-    lunchBreakEnd: constraints?.lunchBreakEnd || 13,
+    lunchBreakStart: formatTimeValue(constraints?.lunchBreakStart || 12),
+    lunchBreakEnd: formatTimeValue(constraints?.lunchBreakEnd || 13),
     breakBetweenClasses: constraints?.breakBetweenClasses || 0,
-    dayStartHour: constraints?.dayStartHour || 8,
-    dayEndHour: constraints?.dayEndHour || 18,
+    dayStartHour: formatTimeValue(constraints?.dayStartHour || 8),
+    dayEndHour: formatTimeValue(constraints?.dayEndHour || 18),
     activeDays: constraints?.activeDays || DAYS.slice(0, 5),
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: Number(value) }));
+    setForm(prev => ({
+      ...prev,
+      [name]: ['maxHoursPerDay', 'breakBetweenClasses'].includes(name)
+        ? Number(value)
+        : value,
+    }));
   };
 
   const toggleDay = (day) => {
@@ -30,7 +36,14 @@ export default function ConstraintForm({ constraints, onSubmit, onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    const data = {
+      ...form,
+      lunchBreakStart: parseTimeValue(form.lunchBreakStart),
+      lunchBreakEnd: parseTimeValue(form.lunchBreakEnd),
+      dayStartHour: parseTimeValue(form.dayStartHour),
+      dayEndHour: parseTimeValue(form.dayEndHour),
+    };
+    onSubmit(data);
   };
 
   return (
@@ -56,15 +69,25 @@ export default function ConstraintForm({ constraints, onSubmit, onClose }) {
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Day Start</label>
-              <select className="form-select" name="dayStartHour" value={form.dayStartHour} onChange={handleChange}>
-                {[6,7,8,9,10,11].map(h => <option key={h} value={h}>{h}:00</option>)}
-              </select>
+              <input
+                className="form-input"
+                type="time"
+                name="dayStartHour"
+                value={form.dayStartHour}
+                onChange={handleChange}
+                step="1800"
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Day End</label>
-              <select className="form-select" name="dayEndHour" value={form.dayEndHour} onChange={handleChange}>
-                {[14,15,16,17,18,19,20].map(h => <option key={h} value={h}>{h}:00</option>)}
-              </select>
+              <input
+                className="form-input"
+                type="time"
+                name="dayEndHour"
+                value={form.dayEndHour}
+                onChange={handleChange}
+                step="1800"
+              />
             </div>
           </div>
 
@@ -72,15 +95,25 @@ export default function ConstraintForm({ constraints, onSubmit, onClose }) {
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Lunch Start</label>
-              <select className="form-select" name="lunchBreakStart" value={form.lunchBreakStart} onChange={handleChange}>
-                {[11,12,13,14].map(h => <option key={h} value={h}>{h}:00</option>)}
-              </select>
+              <input
+                className="form-input"
+                type="time"
+                name="lunchBreakStart"
+                value={form.lunchBreakStart}
+                onChange={handleChange}
+                step="1800"
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Lunch End</label>
-              <select className="form-select" name="lunchBreakEnd" value={form.lunchBreakEnd} onChange={handleChange}>
-                {[12,13,14,15].map(h => <option key={h} value={h}>{h}:00</option>)}
-              </select>
+              <input
+                className="form-input"
+                type="time"
+                name="lunchBreakEnd"
+                value={form.lunchBreakEnd}
+                onChange={handleChange}
+                step="1800"
+              />
             </div>
           </div>
 

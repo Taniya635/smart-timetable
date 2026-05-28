@@ -1,6 +1,10 @@
+const { formatTimeValue } = require('./timeUtils');
+
 /**
  * Conflict Detection & Resolution Suggestions
  */
+
+const TIME_STEP = 0.5;
 
 class ConflictDetector {
   /**
@@ -66,8 +70,8 @@ class ConflictDetector {
    * Build a human-readable conflict message
    */
   static buildMessage(a, b, sameInstructor, sameRoom) {
-    const timeA = `${a.startSlot}:00–${a.endSlot}:00`;
-    const timeB = `${b.startSlot}:00–${b.endSlot}:00`;
+    const timeA = `${formatTimeValue(a.startSlot)}–${formatTimeValue(a.endSlot)}`;
+    const timeB = `${formatTimeValue(b.startSlot)}–${formatTimeValue(b.endSlot)}`;
 
     if (sameRoom) {
       return `Room "${a.roomName}" is double-booked on ${a.day}: "${a.courseName}" (${timeA}) overlaps with "${b.courseName}" (${timeB}).`;
@@ -93,10 +97,10 @@ class ConflictDetector {
       const alternativeSlots = [];
 
       for (const day of activeDays) {
-        for (let hour = dayStartHour; hour <= dayEndHour - duration; hour++) {
+        for (let hour = dayStartHour; hour <= dayEndHour - duration + 1e-9; hour += TIME_STEP) {
           // Skip lunch
           let overlapsLunch = false;
-          for (let h = hour; h < hour + duration; h++) {
+          for (let h = hour; h < hour + duration; h += TIME_STEP) {
             if (h >= lunchBreakStart && h < lunchBreakEnd) {
               overlapsLunch = true;
               break;
@@ -124,7 +128,7 @@ class ConflictDetector {
         moveEntry: entryB.courseName,
         alternatives: alternativeSlots.map(s => ({
           day: s.day,
-          time: `${s.startSlot}:00 – ${s.endSlot}:00`,
+          time: `${formatTimeValue(s.startSlot)} – ${formatTimeValue(s.endSlot)}`,
           startSlot: s.startSlot,
           endSlot: s.endSlot,
         })),

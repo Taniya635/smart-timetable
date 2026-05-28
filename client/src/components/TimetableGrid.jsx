@@ -1,17 +1,27 @@
 import '../styles/TimetableGrid.css';
+import { formatTimeValue } from '../utils/time';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const TIME_STEP = 0.5;
 
-export default function TimetableGrid({ timetable, constraints, conflicts }) {
+export default function TimetableGrid({
+  timetable,
+  constraints,
+  conflicts,
+  title = 'Weekly Timetable',
+  subtitle,
+  wrapperId,
+}) {
   if (!timetable || !timetable.entries || timetable.entries.length === 0) {
     return (
-      <div className="timetable-wrapper">
+      <div className="timetable-wrapper" id={wrapperId}>
         <div className="timetable-header">
           <h2 className="timetable-title">
             <span className="timetable-title-icon">📅</span>
-            Weekly Timetable
+            {title}
           </h2>
         </div>
+        {subtitle && <div className="timetable-subtitle">{subtitle}</div>}
         <div className="glass-card">
           <div className="empty-state">
             <div className="empty-state-icon">🎯</div>
@@ -25,21 +35,21 @@ export default function TimetableGrid({ timetable, constraints, conflicts }) {
     );
   }
 
-  const startHour = constraints?.dayStartHour || 8;
-  const endHour = constraints?.dayEndHour || 18;
+  const startHour = timetable.scheduleWindow?.startHour ?? (constraints?.dayStartHour || 8);
+  const endHour = timetable.scheduleWindow?.endHour ?? (constraints?.dayEndHour || 18);
   const lunchStart = constraints?.lunchBreakStart || 12;
   const lunchEnd = constraints?.lunchBreakEnd || 13;
   const activeDays = constraints?.activeDays || DAYS.slice(0, 5);
   const hours = [];
-  for (let h = startHour; h < endHour; h++) {
-    hours.push(h);
+  for (let h = startHour; h < endHour - 1e-9; h += TIME_STEP) {
+    hours.push(Number(h.toFixed(1)));
   }
 
   // Build a lookup: { "Monday_8": [entry, entry] }
   const grid = {};
   for (const entry of timetable.entries) {
-    for (let h = entry.startSlot; h < entry.endSlot; h++) {
-      const key = `${entry.day}_${h}`;
+    for (let h = entry.startSlot; h < entry.endSlot - 1e-9; h += TIME_STEP) {
+      const key = `${entry.day}_${h.toFixed(1)}`;
       if (!grid[key]) grid[key] = [];
       grid[key].push(entry);
     }
@@ -60,13 +70,14 @@ export default function TimetableGrid({ timetable, constraints, conflicts }) {
   const cols = activeDays.length + 1; // +1 for time column
 
   return (
-    <div className="timetable-wrapper" id="timetable-export-area">
+    <div className="timetable-wrapper" id={wrapperId}>
       <div className="timetable-header">
         <h2 className="timetable-title">
           <span className="timetable-title-icon">📅</span>
-          Weekly Timetable
+          {title}
         </h2>
       </div>
+      {subtitle && <div className="timetable-subtitle">{subtitle}</div>}
       <div className="timetable-grid-container">
         <div className="timetable-grid" style={{ gridTemplateColumns: `70px repeat(${activeDays.length}, 1fr)` }}>
           {/* Header row */}
@@ -82,7 +93,7 @@ export default function TimetableGrid({ timetable, constraints, conflicts }) {
             if (isLunch) {
               return [
                 <div className="grid-time-cell" key={`time-${hour}`} style={{ minHeight: 40 }}>
-                  {hour}:00
+                  {formatTimeValue(hour)}
                 </div>,
                 ...activeDays.map(day => (
                   <div className="grid-lunch-cell" key={`${day}-${hour}`}>
@@ -94,10 +105,10 @@ export default function TimetableGrid({ timetable, constraints, conflicts }) {
 
             return [
               <div className="grid-time-cell" key={`time-${hour}`}>
-                {hour}:00
+                {formatTimeValue(hour)}
               </div>,
               ...activeDays.map(day => {
-                const key = `${day}_${hour}`;
+                const key = `${day}_${hour.toFixed(1)}`;
                 const cellEntries = grid[key] || [];
 
                 return (
@@ -105,11 +116,11 @@ export default function TimetableGrid({ timetable, constraints, conflicts }) {
                     {cellEntries.map(entry => {
                       const entryKey = `${entry.courseId || entry.courseName}_${entry.day}_${entry.startSlot}`;
                       // Only render the block in its first (top) cell
-                      if (hour !== entry.startSlot) return null;
+                      if (Math.abs(hour - entry.startSlot) > 1e-9) return null;
                       if (renderedEntries.has(entryKey)) return null;
                       renderedEntries.add(entryKey);
 
-                      const span = entry.endSlot - entry.startSlot;
+                      const span = (entry.endSlot - entry.startSlot) / TIME_STEP;
                       const hasConflict = entry._id && conflictEntryIds.has(entry._id.toString());
 
                       return (
@@ -129,7 +140,7 @@ export default function TimetableGrid({ timetable, constraints, conflicts }) {
                           <div className="grid-entry-name">{entry.courseName}</div>
                           <div className="grid-entry-instructor">{entry.instructor}</div>
                           {entry.roomName && <div className="grid-entry-time">📍 {entry.roomName}</div>}
-                          <div className="grid-entry-time">{entry.startSlot}:00 – {entry.endSlot}:00</div>
+                          <div className="grid-entry-time">{formatTimeValue(entry.startSlot)} – {formatTimeValue(entry.endSlot)}</div>
                         </div>
                       );
                     })}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import '../styles/CourseForm.css';
+import { formatTimeValue, parseTimeValue } from '../utils/time';
 
 const PRESET_COLORS = [
   '#6c5ce7', '#a855f7', '#0984e3', '#00cec9', '#00b894',
@@ -28,15 +29,15 @@ export default function CourseForm({ course, onSubmit, onClose }) {
     sessionsPerWeek: course.sessionsPerWeek,
     color: course.color,
     preferredDays: course.preferredDays || [],
-    preferredTimeStart: course.preferredTimeStart || '',
-    preferredTimeEnd: course.preferredTimeEnd || '',
+    preferredTimeStart: formatTimeValue(course.preferredTimeStart),
+    preferredTimeEnd: formatTimeValue(course.preferredTimeEnd),
   } : { ...emptyForm });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({
       ...prev,
-      [name]: name === 'duration' || name === 'sessionsPerWeek' || name === 'preferredTimeStart' || name === 'preferredTimeEnd'
+      [name]: name === 'duration' || name === 'sessionsPerWeek'
         ? (value === '' ? '' : Number(value))
         : value,
     }));
@@ -55,6 +56,8 @@ export default function CourseForm({ course, onSubmit, onClose }) {
     e.preventDefault();
     if (!form.name.trim() || !form.instructor.trim()) return;
     const data = { ...form };
+    data.preferredTimeStart = parseTimeValue(form.preferredTimeStart);
+    data.preferredTimeEnd = parseTimeValue(form.preferredTimeEnd);
     if (data.preferredTimeStart === '') delete data.preferredTimeStart;
     if (data.preferredTimeEnd === '') delete data.preferredTimeEnd;
     onSubmit(data);
@@ -140,21 +143,25 @@ export default function CourseForm({ course, onSubmit, onClose }) {
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Pref. Start Hour</label>
-              <select className="form-select" name="preferredTimeStart" value={form.preferredTimeStart} onChange={handleChange}>
-                <option value="">Any</option>
-                {Array.from({ length: 10 }, (_, i) => i + 8).map(h => (
-                  <option key={h} value={h}>{h}:00</option>
-                ))}
-              </select>
+              <input
+                className="form-input"
+                type="time"
+                name="preferredTimeStart"
+                value={form.preferredTimeStart}
+                onChange={handleChange}
+                step="1800"
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Pref. End Hour</label>
-              <select className="form-select" name="preferredTimeEnd" value={form.preferredTimeEnd} onChange={handleChange}>
-                <option value="">Any</option>
-                {Array.from({ length: 10 }, (_, i) => i + 9).map(h => (
-                  <option key={h} value={h}>{h}:00</option>
-                ))}
-              </select>
+              <input
+                className="form-input"
+                type="time"
+                name="preferredTimeEnd"
+                value={form.preferredTimeEnd}
+                onChange={handleChange}
+                step="1800"
+              />
             </div>
           </div>
           <div className="form-actions">

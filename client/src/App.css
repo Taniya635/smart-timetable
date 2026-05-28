@@ -12,9 +12,22 @@
   min-height: 100vh;
 }
 
+@media (max-width: 1200px) {
+  .main-content {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
 @media (max-width: 1024px) {
   .main-content {
     margin-left: 0;
     padding: calc(var(--header-height) + 16px) 16px 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: calc(var(--header-height) + 12px) 12px 20px;
   }
 }

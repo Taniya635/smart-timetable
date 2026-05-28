@@ -25,9 +25,12 @@ export default function ConflictPanel({ conflicts, suggestions }) {
       </div>
       <div className="conflict-list">
         {conflicts.map((conflict, idx) => {
-          const suggestion = suggestions?.find(
-            s => s.conflict?.entryA?.id === conflict.entryA?.id && s.conflict?.entryB?.id === conflict.entryB?.id
-          );
+          const conflictKey = `${conflict.entryA?.id || ''}-${conflict.entryB?.id || ''}`;
+          const suggestion = suggestions?.[idx]
+            || suggestions?.find(s => {
+              const suggestionKey = `${s.conflict?.entryA?.id || ''}-${s.conflict?.entryB?.id || ''}`;
+              return suggestionKey === conflictKey;
+            });
 
           return (
             <div className="conflict-item" key={idx} style={{ animationDelay: `${idx * 0.1}s` }}>
@@ -42,10 +45,10 @@ export default function ConflictPanel({ conflicts, suggestions }) {
               </div>
               <div className="conflict-message">{conflict.message}</div>
 
-              {suggestion && suggestion.alternatives && suggestion.alternatives.length > 0 && (
+              {suggestion && suggestion.alternatives && suggestion.alternatives.length > 0 ? (
                 <div className="conflict-suggestions">
                   <div className="suggestion-title">
-                    💡 Suggested Alternatives for "{suggestion.moveEntry}"
+                    💡 Solution: move "{suggestion.moveEntry}"
                   </div>
                   {suggestion.alternatives.map((alt, aIdx) => (
                     <div className="suggestion-item" key={aIdx}>
@@ -53,6 +56,13 @@ export default function ConflictPanel({ conflicts, suggestions }) {
                       <span>{alt.time}</span>
                     </div>
                   ))}
+                </div>
+              ) : (
+                <div className="conflict-suggestions">
+                  <div className="suggestion-title">💡 Solution unavailable</div>
+                  <div className="suggestion-item">
+                    <span>No automatic alternative could be found for this conflict.</span>
+                  </div>
                 </div>
               )}
             </div>

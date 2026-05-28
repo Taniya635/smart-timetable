@@ -138,3 +138,46 @@
   font-size: 0.75rem;
   color: var(--text-muted);
 }
+
+@media (max-width: 768px) {
+  .conflict-panel-header {
+    align-items: flex-start;
+  }
+
+  .conflict-panel-title {
+    font-size: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .conflict-item {
+    padding: 14px;
+  }
+
+  .conflict-type,
+  .suggestion-title {
+    line-height: 1.4;
+  }
+
+  .suggestion-item {
+    align-items: flex-start;
+  }
+
+  .no-conflicts {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .conflict-panel {
+    margin-top: 18px;
+  }
+
+  .conflict-item {
+    padding: 12px;
+  }
+
+  .suggestion-item {
+    flex-direction: column;
+    gap: 6px;
+  }
+}

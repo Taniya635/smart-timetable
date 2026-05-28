@@ -5,6 +5,9 @@
  */
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const TIME_STEP = 0.5;
+
+const roundTime = (value) => Math.round(value * 2) / 2;
 
 class Scheduler {
   constructor(courses, constraints, rooms = []) {
@@ -37,10 +40,10 @@ class Scheduler {
         const roomStart = room ? Math.max(dayStartHour, room.availableFrom || dayStartHour) : dayStartHour;
         const roomEnd = room ? Math.min(dayEndHour, room.availableTo || dayEndHour) : dayEndHour;
 
-        for (let hour = roomStart; hour <= roomEnd - course.duration; hour++) {
+        for (let hour = roundTime(roomStart); hour <= roundTime(roomEnd - course.duration) + 1e-9; hour += TIME_STEP) {
           // Check if any slot in this range overlaps with lunch break
           let overlapsLunch = false;
-          for (let h = hour; h < hour + course.duration; h++) {
+          for (let h = hour; h < hour + course.duration; h += TIME_STEP) {
             if (h >= lunchBreakStart && h < lunchBreakEnd) {
               overlapsLunch = true;
               break;
@@ -50,7 +53,7 @@ class Scheduler {
 
           // Check if any slot is blocked
           let isBlocked = false;
-          for (let h = hour; h < hour + course.duration; h++) {
+          for (let h = hour; h < hour + course.duration; h += TIME_STEP) {
             if (blockedSlots && blockedSlots.some(bs => bs.day === day && bs.hour === h)) {
               isBlocked = true;
               break;
@@ -224,7 +227,7 @@ class Scheduler {
   /**
    * Run the scheduler
    */
-  generate() {
+  runGeneration() {
     const variables = this.buildVariables();
     const placements = [];
 
@@ -289,6 +292,10 @@ class Scheduler {
     return {
       entries: this.entries,
       unplaced: this.unplaced,
+      scheduleWindow: {
+        startHour: this.constraints.dayStartHour,
+        endHour: this.constraints.dayEndHour,
+      },
       stats: {
         totalSlotsFilled,
         totalSlotsAvailable,
@@ -298,6 +305,35 @@ class Scheduler {
         coursesUnplaced: this.unplaced.length,
       },
     };
+  }
+
+  /**
+   * Expand the timetable window if needed so all sessions can fit.
+   */
+  generate() {
+    const originalConstraints = { ...this.constraints };
+    const maxEndHour = 24;
+    let lastResult = null;
+
+    for (
+      let endHour = originalConstraints.dayEndHour;
+      endHour <= maxEndHour + 1e-9;
+      endHour += TIME_STEP
+    ) {
+      this.constraints = {
+        ...originalConstraints,
+        dayEndHour: Number(endHour.toFixed(1)),
+      };
+
+      lastResult = this.runGeneration();
+      if ((lastResult.unplaced || []).length === 0) {
+        this.constraints = originalConstraints;
+        return lastResult;
+      }
+    }
+
+    this.constraints = originalConstraints;
+    return lastResult;
   }
 }
 

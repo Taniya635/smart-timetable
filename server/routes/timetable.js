@@ -10,6 +10,21 @@ const auth = require('../middleware/auth');
 
 router.use(auth);
 
+async function buildResolvedTimetable(userId) {
+  const [courses, constraint, rooms] = await Promise.all([
+    Course.find({ userId }),
+    Constraint.findOne({ userId }),
+    Room.find({ userId }),
+  ]);
+
+  if (!constraint) {
+    return null;
+  }
+
+  const scheduler = new Scheduler(courses, constraint.toObject(), rooms);
+  return scheduler.generate();
+}
+
 // POST generate timetable
 router.post('/generate', async (req, res) => {
   try {
@@ -34,13 +49,27 @@ router.post('/generate', async (req, res) => {
     // Save timetable (delete old ones for this user)
     await Timetable.deleteMany({ userId: req.userId });
     const timetable = await Timetable.create({ ...result, userId: req.userId });
+    const responseTimetable = {
+      ...timetable.toObject(),
+      scheduleWindow: result.scheduleWindow,
+    };
+
+    const resolvedTimetable = conflicts.length > 0
+      ? await buildResolvedTimetable(req.userId)
+      : null;
 
     res.json({
-      timetable,
+      timetable: resolvedTimetable
+        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || result.scheduleWindow }
+        : responseTimetable,
+      originalTimetable: conflicts.length > 0 ? responseTimetable : null,
       conflicts,
       suggestions: conflicts.length > 0
         ? ConflictDetector.suggest(conflicts, result.entries, constraint.toObject())
         : [],
+      resolvedTimetable: resolvedTimetable
+        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || result.scheduleWindow }
+        : null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -64,8 +93,25 @@ router.get('/', async (req, res) => {
     const suggestions = conflicts.length > 0
       ? ConflictDetector.suggest(conflicts, timetable.entries, constraint.toObject())
       : [];
+    const resolvedTimetable = conflicts.length > 0
+      ? await buildResolvedTimetable(req.userId)
+      : null;
+    const responseTimetable = {
+      ...timetable.toObject(),
+      scheduleWindow: resolvedTimetable?.scheduleWindow || timetable.scheduleWindow,
+    };
 
-    res.json({ timetable, conflicts, suggestions });
+    res.json({
+      timetable: resolvedTimetable
+        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || responseTimetable.scheduleWindow }
+        : responseTimetable,
+      originalTimetable: conflicts.length > 0 ? responseTimetable : null,
+      conflicts,
+      suggestions,
+      resolvedTimetable: resolvedTimetable
+        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || responseTimetable.scheduleWindow }
+        : null,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -86,8 +132,25 @@ router.get('/conflicts', async (req, res) => {
 
     const conflicts = ConflictDetector.detect(timetable.entries);
     const suggestions = ConflictDetector.suggest(conflicts, timetable.entries, constraint.toObject());
+    const resolvedTimetable = conflicts.length > 0
+      ? await buildResolvedTimetable(req.userId)
+      : null;
+    const responseTimetable = {
+      ...timetable.toObject(),
+      scheduleWindow: resolvedTimetable?.scheduleWindow || timetable.scheduleWindow,
+    };
 
-    res.json({ conflicts, suggestions });
+    res.json({
+      timetable: resolvedTimetable
+        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || responseTimetable.scheduleWindow }
+        : responseTimetable,
+      originalTimetable: conflicts.length > 0 ? responseTimetable : null,
+      conflicts,
+      suggestions,
+      resolvedTimetable: resolvedTimetable
+        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || responseTimetable.scheduleWindow }
+        : null,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

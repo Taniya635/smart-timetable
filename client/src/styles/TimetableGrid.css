@@ -15,6 +15,12 @@
   font-weight: 700;
 }
 
+.timetable-subtitle {
+  margin: -8px 0 14px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
 .timetable-title-icon {
   margin-right: 10px;
   font-size: 1.2rem;
@@ -199,4 +205,57 @@
 
 .unplaced-item:last-child {
   border-bottom: none;
+}
+
+@media (max-width: 768px) {
+  .timetable-header {
+    margin-bottom: 14px;
+  }
+
+  .timetable-title {
+    font-size: 1.15rem;
+  }
+
+  .timetable-grid-container {
+    border-radius: 14px;
+  }
+
+  .timetable-grid {
+    min-width: 640px;
+  }
+
+  .grid-header-cell,
+  .grid-time-cell,
+  .grid-cell,
+  .grid-lunch-cell {
+    min-height: 54px;
+  }
+
+  .grid-entry {
+    padding: 7px 8px;
+  }
+
+  .grid-entry-name {
+    font-size: 0.75rem;
+  }
+
+  .grid-entry-instructor,
+  .grid-entry-time,
+  .lunch-label {
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .timetable-grid {
+    min-width: 560px;
+  }
+
+  .grid-time-cell {
+    padding: 8px 6px;
+  }
+
+  .unplaced-warning {
+    padding: 14px;
+  }
 }

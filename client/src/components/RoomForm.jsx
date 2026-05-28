@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import '../styles/CourseForm.css';
+import { formatTimeValue, parseTimeValue } from '../utils/time';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -8,19 +9,19 @@ export default function RoomForm({ room, onSubmit, onClose }) {
     name: room.name,
     capacity: room.capacity,
     availableDays: room.availableDays || DAYS.slice(0, 5),
-    availableFrom: room.availableFrom || 8,
-    availableTo: room.availableTo || 18,
+    availableFrom: formatTimeValue(room.availableFrom || 8),
+    availableTo: formatTimeValue(room.availableTo || 18),
   } : {
     name: '',
     capacity: 30,
     availableDays: DAYS.slice(0, 5),
-    availableFrom: 8,
-    availableTo: 18,
+    availableFrom: formatTimeValue(8),
+    availableTo: formatTimeValue(18),
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: ['capacity', 'availableFrom', 'availableTo'].includes(name) ? Number(value) : value }));
+    setForm(prev => ({ ...prev, [name]: name === 'capacity' ? Number(value) : value }));
   };
 
   const toggleDay = (day) => {
@@ -35,7 +36,11 @@ export default function RoomForm({ room, onSubmit, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.name.trim()) return;
-    onSubmit(form);
+    onSubmit({
+      ...form,
+      availableFrom: parseTimeValue(form.availableFrom),
+      availableTo: parseTimeValue(form.availableTo),
+    });
   };
 
   return (
@@ -88,19 +93,25 @@ export default function RoomForm({ room, onSubmit, onClose }) {
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Available From</label>
-              <select className="form-select" name="availableFrom" value={form.availableFrom} onChange={handleChange}>
-                {Array.from({ length: 10 }, (_, i) => i + 6).map(h => (
-                  <option key={h} value={h}>{h}:00</option>
-                ))}
-              </select>
+              <input
+                className="form-input"
+                type="time"
+                name="availableFrom"
+                value={form.availableFrom}
+                onChange={handleChange}
+                step="1800"
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Available Until</label>
-              <select className="form-select" name="availableTo" value={form.availableTo} onChange={handleChange}>
-                {Array.from({ length: 10 }, (_, i) => i + 11).map(h => (
-                  <option key={h} value={h}>{h}:00</option>
-                ))}
-              </select>
+              <input
+                className="form-input"
+                type="time"
+                name="availableTo"
+                value={form.availableTo}
+                onChange={handleChange}
+                step="1800"
+              />
             </div>
           </div>
           <div className="form-actions">

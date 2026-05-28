@@ -182,8 +182,16 @@
 
 @media (max-width: 1024px) {
   .sidebar {
+    width: var(--sidebar-width);
+    max-width: 88vw;
+  }
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
     transform: translateX(-100%);
     transition: transform var(--transition-slow);
+    box-shadow: var(--shadow-lg);
   }
   .sidebar.mobile-open {
     transform: translateX(0);
@@ -192,5 +200,40 @@
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 88vw;
+    max-width: 340px;
+  }
+
+  .sidebar-section {
+    padding: 16px;
+  }
+
+  .course-card {
+    gap: 10px;
+  }
+
+  .course-name,
+  .course-meta {
+    white-space: normal;
+  }
+
+  .course-actions {
+    opacity: 1;
+  }
+
+  .course-card:hover {
+    transform: none;
+  }
+
+  .sidebar-toggle {
+    bottom: 16px;
+    left: 16px;
+    width: 46px;
+    height: 46px;
   }
 }

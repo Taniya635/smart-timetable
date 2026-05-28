@@ -100,3 +100,62 @@
   font-weight: 500;
   color: var(--text-primary);
 }
+
+@media (max-width: 1024px) {
+  .header {
+    padding: 0 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    height: auto;
+    min-height: var(--header-height);
+    padding: 10px 12px;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .header-brand {
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .header-logo {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+
+  .header-subtitle {
+    display: none;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .header-status,
+  .header-user {
+    padding: 6px 10px;
+  }
+
+  .header-user {
+    border-left: none;
+    padding-left: 0;
+  }
+
+  .header-user-name {
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

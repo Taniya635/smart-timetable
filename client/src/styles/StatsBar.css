@@ -82,3 +82,25 @@
   background: var(--primary-gradient);
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+@media (max-width: 768px) {
+  .stats-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .stat-value {
+    font-size: 1.35rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-bar {
+    grid-template-columns: 1fr;
+  }
+}
