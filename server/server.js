@@ -10,7 +10,12 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors);
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -24,8 +29,15 @@ app.use('/api/constraints', require('./routes/constraints'));
 app.use('/api/timetable', require('./routes/timetable'));
 app.use('/api/rooms', require('./routes/rooms'));
 
-app.listen(PORT, async () => {
-  // Connect to MongoDB
+const startServer = async () => {
   await connectDB();
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+};
+
+startServer().catch((error) => {
+  console.error(`❌ Server startup failed: ${error.message}`);
+  process.exit(1);
 });
