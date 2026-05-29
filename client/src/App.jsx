@@ -56,10 +56,6 @@ function App() {
     navigate("/", { replace: true });
   };
 
-  if (!authReady) {
-    return null;
-  }
-
   return (
     <>
       <Outlet

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
@@ -20,6 +20,7 @@ import {
   getRooms,
   createRoom,
   deleteRoom,
+  logout,
 } from "../api/api";
 import "../App.css";
 
@@ -59,7 +60,7 @@ export default function Dashboard() {
           setSuggestions(timetableRes.data.suggestions || []);
         }
         setServerStatus(true);
-      } catch (err) {
+      } catch {
         setServerStatus(false);
         addToast("Failed to load data", "error");
       }
@@ -106,7 +107,7 @@ export default function Dashboard() {
       await deleteCourse(id);
       setCourses((prev) => prev.filter((c) => c._id !== id));
       addToast("Course deleted");
-    } catch (err) {
+    } catch {
       addToast("Failed to delete course", "error");
     }
   };
@@ -128,7 +129,7 @@ export default function Dashboard() {
       await deleteRoom(id);
       setRooms((prev) => prev.filter((r) => r._id !== id));
       addToast("Room deleted");
-    } catch (err) {
+    } catch {
       addToast("Failed to delete room", "error");
     }
   };

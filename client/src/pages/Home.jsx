@@ -22,7 +22,7 @@ export default function Home() {
       onAuth(userData);
       handleCloseAuth();
     },
-    [onAuth],
+    [onAuth, handleCloseAuth],
   );
 
   return (
