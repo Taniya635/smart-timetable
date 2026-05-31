@@ -109,16 +109,17 @@
 
 @media (max-width: 768px) {
   .header {
-    height: auto;
+    height: var(--header-height);
     min-height: var(--header-height);
-    padding: 10px 12px;
-    gap: 10px;
-    align-items: flex-start;
+    padding: 0 12px;
+    gap: 8px;
+    align-items: center;
   }
 
   .header-brand {
     gap: 10px;
     min-width: 0;
+    flex: 1;
   }
 
   .header-logo {
@@ -137,25 +138,51 @@
   }
 
   .header-actions {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .header-status {
+    min-width: 28px;
+    width: 28px;
+    height: 28px;
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .header-user {
+    border-left: 1px solid var(--glass-border);
+    padding-left: 8px;
     gap: 8px;
   }
 
-  .header-status,
-  .header-user {
+  .header-user .btn {
     padding: 6px 10px;
+  }
+
+  .header-user-name {
+    max-width: 20vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0 10px;
+  }
+
+  .header-user-name {
+    display: none;
   }
 
   .header-user {
     border-left: none;
     padding-left: 0;
-  }
-
-  .header-user-name {
-    max-width: 42vw;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 }

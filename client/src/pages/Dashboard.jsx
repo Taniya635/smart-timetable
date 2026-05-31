@@ -68,6 +68,17 @@ export default function Dashboard() {
     loadData();
   }, [addToast]);
 
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileOpen]);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -276,45 +287,27 @@ export default function Dashboard() {
         )}
 
         {showCourseForm && (
-          <div
-            className="modal-overlay"
-            onClick={() => setShowCourseForm(false)}
-          >
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <CourseForm
-                course={editingCourse}
-                onSubmit={editingCourse ? handleEditCourse : handleAddCourse}
-                onClose={() => setShowCourseForm(false)}
-              />
-            </div>
-          </div>
+          <CourseForm
+            course={editingCourse}
+            onSubmit={editingCourse ? handleEditCourse : handleAddCourse}
+            onClose={() => setShowCourseForm(false)}
+          />
         )}
 
         {showConstraintForm && (
-          <div
-            className="modal-overlay"
-            onClick={() => setShowConstraintForm(false)}
-          >
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <ConstraintForm
-                constraints={constraints}
-                onSubmit={handleUpdateConstraints}
-                onClose={() => setShowConstraintForm(false)}
-              />
-            </div>
-          </div>
+          <ConstraintForm
+            constraints={constraints}
+            onSubmit={handleUpdateConstraints}
+            onClose={() => setShowConstraintForm(false)}
+          />
         )}
 
         {showRoomForm && (
-          <div className="modal-overlay" onClick={() => setShowRoomForm(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <RoomForm
-                room={null}
-                onSubmit={handleAddRoom}
-                onClose={() => setShowRoomForm(false)}
-              />
-            </div>
-          </div>
+          <RoomForm
+            room={null}
+            onSubmit={handleAddRoom}
+            onClose={() => setShowRoomForm(false)}
+          />
         )}
       </div>
     </div>

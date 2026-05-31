@@ -10,35 +10,24 @@ const auth = require('../middleware/auth');
 
 router.use(auth);
 
-async function buildResolvedTimetable(userId) {
-  const [courses, constraint, rooms] = await Promise.all([
-    Course.find({ userId }),
-    Constraint.findOne({ userId }),
-    Room.find({ userId }),
-  ]);
-
-  if (!constraint) {
-    return null;
-  }
-
-  const scheduler = new Scheduler(courses, constraint.toObject(), rooms);
-  return scheduler.generate();
-}
-
 // POST generate timetable
 router.post('/generate', async (req, res) => {
   try {
-    const courses = await Course.find({ userId: req.userId });
+    const [courses, existingConstraint, rooms] = await Promise.all([
+      Course.find({ userId: req.userId }).lean(),
+      Constraint.findOne({ userId: req.userId }),
+      Room.find({ userId: req.userId }).lean(),
+    ]);
+
     if (courses.length === 0) {
       return res.status(400).json({ error: 'No courses found. Add courses before generating.' });
     }
 
-    let constraint = await Constraint.findOne({ userId: req.userId });
+    let constraint = existingConstraint;
     if (!constraint) {
       constraint = await Constraint.create({ userId: req.userId });
     }
 
-    const rooms = await Room.find({ userId: req.userId });
     const scheduler = new Scheduler(courses, constraint.toObject(), rooms);
     const result = scheduler.generate();
 
@@ -46,7 +35,7 @@ router.post('/generate', async (req, res) => {
     const conflicts = ConflictDetector.detect(result.entries);
     result.stats.conflictCount = conflicts.length;
 
-    // Save timetable (delete old ones for this user)
+    // Save timetable (keep only one latest document per user)
     await Timetable.deleteMany({ userId: req.userId });
     const timetable = await Timetable.create({ ...result, userId: req.userId });
     const responseTimetable = {
@@ -54,22 +43,14 @@ router.post('/generate', async (req, res) => {
       scheduleWindow: result.scheduleWindow,
     };
 
-    const resolvedTimetable = conflicts.length > 0
-      ? await buildResolvedTimetable(req.userId)
-      : null;
-
     res.json({
-      timetable: resolvedTimetable
-        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || result.scheduleWindow }
-        : responseTimetable,
-      originalTimetable: conflicts.length > 0 ? responseTimetable : null,
+      timetable: responseTimetable,
+      originalTimetable: null,
       conflicts,
       suggestions: conflicts.length > 0
         ? ConflictDetector.suggest(conflicts, result.entries, constraint.toObject())
         : [],
-      resolvedTimetable: resolvedTimetable
-        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || result.scheduleWindow }
-        : null,
+      resolvedTimetable: null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -79,38 +60,32 @@ router.post('/generate', async (req, res) => {
 // GET latest timetable
 router.get('/', async (req, res) => {
   try {
-    const timetable = await Timetable.findOne({ userId: req.userId }).sort({ createdAt: -1 });
+    const [timetable, constraint] = await Promise.all([
+      Timetable.findOne({ userId: req.userId }).sort({ createdAt: -1 }).lean(),
+      Constraint.findOne({ userId: req.userId }).lean(),
+    ]);
+
     if (!timetable) {
       return res.json({ timetable: null, conflicts: [], suggestions: [] });
     }
 
-    let constraint = await Constraint.findOne({ userId: req.userId });
-    if (!constraint) {
-      constraint = await Constraint.create({ userId: req.userId });
-    }
+    const constraintData = constraint || new Constraint({ userId: req.userId }).toObject();
 
     const conflicts = ConflictDetector.detect(timetable.entries);
     const suggestions = conflicts.length > 0
-      ? ConflictDetector.suggest(conflicts, timetable.entries, constraint.toObject())
+      ? ConflictDetector.suggest(conflicts, timetable.entries, constraintData)
       : [];
-    const resolvedTimetable = conflicts.length > 0
-      ? await buildResolvedTimetable(req.userId)
-      : null;
     const responseTimetable = {
-      ...timetable.toObject(),
-      scheduleWindow: resolvedTimetable?.scheduleWindow || timetable.scheduleWindow,
+      ...timetable,
+      scheduleWindow: timetable.scheduleWindow,
     };
 
     res.json({
-      timetable: resolvedTimetable
-        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || responseTimetable.scheduleWindow }
-        : responseTimetable,
-      originalTimetable: conflicts.length > 0 ? responseTimetable : null,
+      timetable: responseTimetable,
+      originalTimetable: null,
       conflicts,
       suggestions,
-      resolvedTimetable: resolvedTimetable
-        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || responseTimetable.scheduleWindow }
-        : null,
+      resolvedTimetable: null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -120,36 +95,30 @@ router.get('/', async (req, res) => {
 // GET conflicts for current timetable
 router.get('/conflicts', async (req, res) => {
   try {
-    const timetable = await Timetable.findOne({ userId: req.userId }).sort({ createdAt: -1 });
+    const [timetable, constraint] = await Promise.all([
+      Timetable.findOne({ userId: req.userId }).sort({ createdAt: -1 }).lean(),
+      Constraint.findOne({ userId: req.userId }).lean(),
+    ]);
+
     if (!timetable) {
       return res.json({ conflicts: [], suggestions: [] });
     }
 
-    let constraint = await Constraint.findOne({ userId: req.userId });
-    if (!constraint) {
-      constraint = await Constraint.create({ userId: req.userId });
-    }
+    const constraintData = constraint || new Constraint({ userId: req.userId }).toObject();
 
     const conflicts = ConflictDetector.detect(timetable.entries);
-    const suggestions = ConflictDetector.suggest(conflicts, timetable.entries, constraint.toObject());
-    const resolvedTimetable = conflicts.length > 0
-      ? await buildResolvedTimetable(req.userId)
-      : null;
+    const suggestions = ConflictDetector.suggest(conflicts, timetable.entries, constraintData);
     const responseTimetable = {
-      ...timetable.toObject(),
-      scheduleWindow: resolvedTimetable?.scheduleWindow || timetable.scheduleWindow,
+      ...timetable,
+      scheduleWindow: timetable.scheduleWindow,
     };
 
     res.json({
-      timetable: resolvedTimetable
-        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || responseTimetable.scheduleWindow }
-        : responseTimetable,
-      originalTimetable: conflicts.length > 0 ? responseTimetable : null,
+      timetable: responseTimetable,
+      originalTimetable: null,
       conflicts,
       suggestions,
-      resolvedTimetable: resolvedTimetable
-        ? { ...resolvedTimetable, scheduleWindow: resolvedTimetable.scheduleWindow || responseTimetable.scheduleWindow }
-        : null,
+      resolvedTimetable: null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

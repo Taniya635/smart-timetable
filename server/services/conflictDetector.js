@@ -7,58 +7,84 @@ const { formatTimeValue } = require('./timeUtils');
 const TIME_STEP = 0.5;
 
 class ConflictDetector {
+  static groupEntriesByDay(entries) {
+    const byDay = new Map();
+
+    for (const entry of entries) {
+      const dayEntries = byDay.get(entry.day);
+      if (dayEntries) {
+        dayEntries.push(entry);
+      } else {
+        byDay.set(entry.day, [entry]);
+      }
+    }
+
+    for (const dayEntries of byDay.values()) {
+      dayEntries.sort((a, b) => a.startSlot - b.startSlot);
+    }
+
+    return byDay;
+  }
+
   /**
    * Detect all conflicts in a set of timetable entries
    */
   static detect(entries) {
     const conflicts = [];
+    const byDay = ConflictDetector.groupEntriesByDay(entries);
 
-    for (let i = 0; i < entries.length; i++) {
-      for (let j = i + 1; j < entries.length; j++) {
-        const a = entries[i];
-        const b = entries[j];
+    for (const dayEntries of byDay.values()) {
+      for (let i = 0; i < dayEntries.length; i++) {
+        const a = dayEntries[i];
+        for (let j = i + 1; j < dayEntries.length; j++) {
+          const b = dayEntries[j];
 
-        if (a.day !== b.day) continue;
+          // Entries are sorted by start time. If b starts after (or at) a's end, no later
+          // entry can overlap with a.
+          if (b.startSlot >= a.endSlot) {
+            break;
+          }
 
-        // Time overlap
-        const overlaps = !(a.endSlot <= b.startSlot || b.endSlot <= a.startSlot);
-        if (!overlaps) continue;
+          // Time overlap
+          const overlaps = !(a.endSlot <= b.startSlot || b.endSlot <= a.startSlot);
+          if (!overlaps) continue;
 
-        // Determine conflict type
-        const sameInstructor = a.instructor === b.instructor;
-        const sameCourse = a.courseId.toString() === b.courseId.toString();
-        const sameRoom = a.roomId && b.roomId && a.roomId.toString() === b.roomId.toString();
+          // Determine conflict type
+          const sameInstructor = a.instructor === b.instructor;
+          const sameCourse = a.courseId.toString() === b.courseId.toString();
+          const sameRoom = a.roomId && b.roomId && a.roomId.toString() === b.roomId.toString();
 
-        let type = 'time_overlap';
-        let severity = 'medium';
-        if (sameRoom) { type = 'room_double_booking'; severity = 'high'; }
-        if (sameInstructor) { type = 'instructor_clash'; severity = 'high'; }
-        if (sameCourse) { type = 'same_course_overlap'; }
+          let type = 'time_overlap';
+          let severity = 'medium';
+          if (sameRoom) { type = 'room_double_booking'; severity = 'high'; }
+          if (sameInstructor) { type = 'instructor_clash'; severity = 'high'; }
+          if (sameCourse) { type = 'same_course_overlap'; }
 
-        if (overlaps) {
-          conflicts.push({
-            type,
-            entryA: {
-              id: a._id,
-              courseName: a.courseName,
-              instructor: a.instructor,
-              day: a.day,
-              startSlot: a.startSlot,
-              endSlot: a.endSlot,
-              roomName: a.roomName,
-            },
-            entryB: {
-              id: b._id,
-              courseName: b.courseName,
-              instructor: b.instructor,
-              day: b.day,
-              startSlot: b.startSlot,
-              endSlot: b.endSlot,
-              roomName: b.roomName,
-            },
-            severity,
-            message: ConflictDetector.buildMessage(a, b, sameInstructor, sameRoom),
-          });
+          if (overlaps) {
+            conflicts.push({
+              type,
+              entryA: {
+                id: a._id,
+                courseName: a.courseName,
+                instructor: a.instructor,
+                day: a.day,
+                startSlot: a.startSlot,
+                endSlot: a.endSlot,
+                roomName: a.roomName,
+              },
+              entryB: {
+                id: b._id,
+                courseName: b.courseName,
+                instructor: b.instructor,
+                day: b.day,
+                startSlot: b.startSlot,
+                endSlot: b.endSlot,
+                roomName: b.roomName,
+              },
+              severity,
+              message: ConflictDetector.buildMessage(a, b, sameInstructor, sameRoom),
+            });
+          }
         }
       }
     }
@@ -87,8 +113,8 @@ class ConflictDetector {
    */
   static suggest(conflicts, entries, constraints) {
     const suggestions = [];
-    const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const { dayStartHour, dayEndHour, lunchBreakStart, lunchBreakEnd, activeDays } = constraints;
+    const byDay = ConflictDetector.groupEntriesByDay(entries);
 
     for (const conflict of conflicts) {
       // Try to find alternative slots for entryB
@@ -109,9 +135,9 @@ class ConflictDetector {
           if (overlapsLunch) continue;
 
           // Check if this slot is free
-          const wouldConflict = entries.some(e => {
+          const dayEntries = byDay.get(day) || [];
+          const wouldConflict = dayEntries.some(e => {
             if (e._id && e._id.toString() === entryB.id?.toString()) return false; // Skip self
-            if (e.day !== day) return false;
             return !(hour + duration <= e.startSlot || e.endSlot <= hour);
           });
 

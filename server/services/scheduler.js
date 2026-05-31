@@ -4,10 +4,10 @@
  * Supports room/classroom assignment
  */
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const TIME_STEP = 0.5;
 
 const roundTime = (value) => Math.round(value * 2) / 2;
+const toSlotKey = (day, hour) => `${day}|${roundTime(hour).toFixed(1)}`;
 
 class Scheduler {
   constructor(courses, constraints, rooms = []) {
@@ -16,14 +16,37 @@ class Scheduler {
     this.rooms = rooms;
     this.entries = [];
     this.unplaced = [];
+    this.domainCache = new Map();
+    this.blockedSlotSet = new Set(
+      (constraints.blockedSlots || []).map((slot) => toSlotKey(slot.day, slot.hour)),
+    );
+  }
+
+  getDomainCacheKey(course) {
+    const preferredDays = (course.preferredDays || []).join(',');
+    return [
+      course.courseId?.toString() || '',
+      course.duration,
+      preferredDays,
+      course.preferredTimeStart ?? '',
+      course.preferredTimeEnd ?? '',
+      this.constraints.dayStartHour,
+      this.constraints.dayEndHour,
+    ].join('|');
   }
 
   /**
    * Generate all valid (day, startSlot, room?) domain values for a course session
    */
   generateDomain(course) {
+    const cacheKey = this.getDomainCacheKey(course);
+    const cached = this.domainCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const domain = [];
-    const { dayStartHour, dayEndHour, lunchBreakStart, lunchBreakEnd, activeDays, blockedSlots } = this.constraints;
+    const { dayStartHour, dayEndHour, lunchBreakStart, lunchBreakEnd, activeDays } = this.constraints;
 
     const days = course.preferredDays && course.preferredDays.length > 0
       ? course.preferredDays.filter(d => activeDays.includes(d))
@@ -54,7 +77,7 @@ class Scheduler {
           // Check if any slot is blocked
           let isBlocked = false;
           for (let h = hour; h < hour + course.duration; h += TIME_STEP) {
-            if (blockedSlots && blockedSlots.some(bs => bs.day === day && bs.hour === h)) {
+            if (this.blockedSlotSet.has(toSlotKey(day, h))) {
               isBlocked = true;
               break;
             }
@@ -86,6 +109,7 @@ class Scheduler {
 
     // Sort by score descending (best first)
     domain.sort((a, b) => b.score - a.score);
+    this.domainCache.set(cacheKey, domain);
     return domain;
   }
 
@@ -125,9 +149,12 @@ class Scheduler {
     }
 
     // Max hours per day check
-    const dayHours = placements
-      .filter(p => p.day === entry.day)
-      .reduce((sum, p) => sum + (p.endSlot - p.startSlot), 0);
+    let dayHours = 0;
+    for (const placed of placements) {
+      if (placed.day === entry.day) {
+        dayHours += (placed.endSlot - placed.startSlot);
+      }
+    }
     if (dayHours + (entry.endSlot - entry.startSlot) > maxHoursPerDay) {
       return false;
     }
@@ -181,10 +208,12 @@ class Scheduler {
    * Prevent same course from being placed at the same day (spread sessions)
    */
   checkSessionSpread(entry, placements) {
-    const sameCourse = placements.filter(p => p.courseId.toString() === entry.courseId.toString());
-    if (sameCourse.some(p => p.day === entry.day)) {
-      return false;
+    for (const placed of placements) {
+      if (placed.courseId.toString() === entry.courseId.toString() && placed.day === entry.day) {
+        return false;
+      }
     }
+
     return true;
   }
 
@@ -228,6 +257,11 @@ class Scheduler {
    * Run the scheduler
    */
   runGeneration() {
+    this.domainCache.clear();
+    this.blockedSlotSet = new Set(
+      (this.constraints.blockedSlots || []).map((slot) => toSlotKey(slot.day, slot.hour)),
+    );
+
     const variables = this.buildVariables();
     const placements = [];
 

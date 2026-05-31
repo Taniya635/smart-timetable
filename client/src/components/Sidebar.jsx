@@ -16,12 +16,25 @@ export default function Sidebar({
   mobileOpen,
   onToggleMobile,
 }) {
+  const closeMobileSidebar = () => {
+    if (mobileOpen) {
+      onToggleMobile();
+    }
+  };
+
   return (
     <>
+      <button
+        className={`sidebar-backdrop ${mobileOpen ? 'visible' : ''}`}
+        onClick={closeMobileSidebar}
+        aria-label="Close sidebar"
+        type="button"
+      />
+
       <aside className={`sidebar ${mobileOpen ? 'mobile-open' : ''}`} id="sidebar">
         {/* Add Course Button */}
         <div className="sidebar-section">
-          <button className="btn btn-primary btn-lg generate-btn" onClick={onAddCourse} id="add-course-btn">
+          <button className="btn btn-primary btn-lg generate-btn" onClick={() => { onAddCourse(); closeMobileSidebar(); }} id="add-course-btn">
             ➕ Add Course
           </button>
         </div>
@@ -69,7 +82,7 @@ export default function Sidebar({
             Classrooms ({rooms.length})
           </div>
           <div className="sidebar-actions" style={{ marginBottom: rooms.length > 0 ? 10 : 0 }}>
-            <button className="btn btn-ghost" onClick={onAddRoom} id="add-room-btn" style={{ width: '100%' }}>
+            <button className="btn btn-ghost" onClick={() => { onAddRoom(); closeMobileSidebar(); }} id="add-room-btn" style={{ width: '100%' }}>
               ➕ Add Room
             </button>
           </div>
@@ -100,7 +113,7 @@ export default function Sidebar({
             Settings
           </div>
           <div className="sidebar-actions">
-            <button className="btn btn-ghost" onClick={onShowConstraints} id="constraints-btn" style={{ width: '100%' }}>
+            <button className="btn btn-ghost" onClick={() => { onShowConstraints(); closeMobileSidebar(); }} id="constraints-btn" style={{ width: '100%' }}>
               ⚙️ Configure Constraints
             </button>
           </div>
@@ -115,7 +128,7 @@ export default function Sidebar({
           <div className="sidebar-actions">
             <button
               className="btn btn-success generate-btn"
-              onClick={onGenerate}
+              onClick={() => { onGenerate(); closeMobileSidebar(); }}
               disabled={isGenerating || courses.length === 0}
               id="generate-btn"
             >
@@ -129,7 +142,7 @@ export default function Sidebar({
               )}
             </button>
             {hasTimetable && (
-              <button className="btn btn-ghost" onClick={onExport} id="export-btn" style={{ width: '100%' }}>
+              <button className="btn btn-ghost" onClick={() => { onExport(); closeMobileSidebar(); }} id="export-btn" style={{ width: '100%' }}>
                 📥 Export as PNG
               </button>
             )}

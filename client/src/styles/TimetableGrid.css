@@ -28,6 +28,8 @@
 
 .timetable-grid-container {
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   border-radius: var(--radius-lg);
   border: 1px solid var(--glass-border);
   background: var(--glass);
@@ -224,6 +226,12 @@
     min-width: 640px;
   }
 
+  .grid-header-cell {
+    font-size: 0.72rem;
+    letter-spacing: 0.4px;
+    padding: 12px 6px;
+  }
+
   .grid-header-cell,
   .grid-time-cell,
   .grid-cell,
@@ -248,11 +256,24 @@
 
 @media (max-width: 480px) {
   .timetable-grid {
-    min-width: 560px;
+    min-width: 620px;
   }
 
   .grid-time-cell {
     padding: 8px 6px;
+  }
+
+  .grid-entry {
+    padding: 6px 7px;
+  }
+
+  .grid-entry-name {
+    font-size: 0.68rem;
+  }
+
+  .grid-entry-instructor,
+  .grid-entry-time {
+    font-size: 0.56rem;
   }
 
   .unplaced-warning {

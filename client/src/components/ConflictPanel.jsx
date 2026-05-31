@@ -1,6 +1,16 @@
+import { useMemo } from 'react';
 import '../styles/ConflictPanel.css';
 
 export default function ConflictPanel({ conflicts, suggestions }) {
+  const suggestionByConflictKey = useMemo(() => {
+    const map = new Map();
+    for (const suggestion of suggestions || []) {
+      const key = `${suggestion.conflict?.entryA?.id || ''}-${suggestion.conflict?.entryB?.id || ''}`;
+      map.set(key, suggestion);
+    }
+    return map;
+  }, [suggestions]);
+
   if (!conflicts || conflicts.length === 0) {
     return (
       <div className="conflict-panel">
@@ -26,11 +36,7 @@ export default function ConflictPanel({ conflicts, suggestions }) {
       <div className="conflict-list">
         {conflicts.map((conflict, idx) => {
           const conflictKey = `${conflict.entryA?.id || ''}-${conflict.entryB?.id || ''}`;
-          const suggestion = suggestions?.[idx]
-            || suggestions?.find(s => {
-              const suggestionKey = `${s.conflict?.entryA?.id || ''}-${s.conflict?.entryB?.id || ''}`;
-              return suggestionKey === conflictKey;
-            });
+          const suggestion = suggestionByConflictKey.get(conflictKey) || suggestions?.[idx];
 
           return (
             <div className="conflict-item" key={idx} style={{ animationDelay: `${idx * 0.1}s` }}>

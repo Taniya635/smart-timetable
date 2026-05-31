@@ -57,4 +57,6 @@ const constraintSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+constraintSchema.index({ userId: 1 }, { unique: true });
+
 module.exports = mongoose.model('Constraint', constraintSchema);

@@ -608,6 +608,17 @@ body {
     max-height: 88vh;
     overflow-y: auto;
   }
+
+  .modal-overlay {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .modal-content {
+    margin: 10px auto;
+  }
+
   .form-actions {
     flex-direction: column;
   }
@@ -630,6 +641,7 @@ body {
     width: calc(100vw - 20px);
     padding: 16px;
     border-radius: 14px;
+    max-height: calc(100vh - 20px);
   }
   .chip {
     padding: 4px 10px;
